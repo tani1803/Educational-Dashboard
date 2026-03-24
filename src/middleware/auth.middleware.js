@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 
+// Verifies JWT and attaches decoded user to req.user
 exports.protect = (req, res, next) => {
   let token;
 
@@ -18,4 +19,16 @@ exports.protect = (req, res, next) => {
   if (!token) {
     return res.status(401).json({ message: "No token" });
   }
+};
+
+//restrictTo("professor", "ta")
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: "You do not have permission to perform this action."
+      });
+    }
+    next();
+  };
 };

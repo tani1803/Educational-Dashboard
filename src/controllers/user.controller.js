@@ -1,9 +1,12 @@
+const User = require("../models/user.model");
 const { success } = require("../utils/apiResponse");
 
-exports.getUsers = async (req, res, next) => {
+// prof ans TA can access the feature only 
+exports.getAllUsers = async (req, res, next) => {
   try {
-    return success(res, "Users fetched", []);
-  } catch (err) {
-    next(err);
+    const users = await User.find().select("-password");
+    return success(res, "Users fetched", users);
+  } catch (error) {
+    next(error);
   }
 };

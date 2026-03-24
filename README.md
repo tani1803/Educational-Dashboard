@@ -1,0 +1,1 @@
+Done with authentication (register/login via collegeId + JWT), RBAC middleware (protect + restrictTo), course creation by professor, student enrollment, and get all users for professor and TA. Models for User and Course are also finalized with all required fields.

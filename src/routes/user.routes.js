@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-const userController = require("../controllers/user.controller");
+const { getAllUsers } = require("../controllers/user.controller");
+const { protect, restrictTo } = require("../middleware/auth.middleware");
 
-router.get("/", userController.getUsers);
+router.get("/", protect, restrictTo("professor", "ta"), getAllUsers);
 
 module.exports = router;

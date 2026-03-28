@@ -4,8 +4,8 @@ const courseController = require('../controllers/course.controller');
 const { createCourse, getCourses, getSingleCourse, enrollInCourse, updateCourse,deleteCourse,getMyCourses } = require("../controllers/course.controller");
 const { protect, restrictTo } = require("../middleware/auth.middleware");
 const { searchStudents } = require("../controllers/search.controller");
-
-
+const lessonRouter = require("./lesson.routes");
+const submissionRouter = require("./submission.routes");
 // Public
 router.get("/", getCourses);
 
@@ -23,5 +23,13 @@ router.post("/:id/enroll", protect, restrictTo("student"), enrollInCourse);
 
 // Single course — public
 router.get("/:id", getSingleCourse);
+
+
+// NESTED ROUTE FOR LESSONS
+
+router.use("/:courseId/lessons", lessonRouter);
+
+//submission by student
+router.use("/:courseId/submissions", submissionRouter);
 
 module.exports = router;

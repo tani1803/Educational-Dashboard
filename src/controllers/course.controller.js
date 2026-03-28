@@ -1,6 +1,9 @@
 const Course = require("../models/course.model");
 const { success } = require("../utils/apiResponse");
 const courseService = require('../services/course.service');
+const Lesson = require("../models/lesson.model");           // <-- ADD THIS
+const Submission = require("../models/submission.model");   // <-- ADD THIS
+const fs = require("fs");                                   // <-- ADD THIS
 
 // 1. Get All Courses
 exports.getCourses = async (req, res, next) => {
@@ -115,31 +118,57 @@ exports.updateCourse = async (req, res, next) => {
   }
 };
 
-// 6. Delete Course (Owner Only)
+// 6. Delete Course (Owner Only) + Cascading File Cleanup
 exports.deleteCourse = async (req, res, next) => {
   try {
     const customCourseId = req.params.id;
 
-    // REFACTORED: Use findOne to search by custom courseId
+    // 1. Find the course to check ownership
     const course = await Course.findOne({ courseId: customCourseId });
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    // Authorization logic (Unchanged)
+    // 2. Authorization logic
     if (course.instructor.toString() !== req.user.id) {
       return res.status(403).json({
         message: "Forbidden: You can only delete courses that you created"
       });
     }
 
-    // REFACTORED: Use findOneAndDelete instead of findByIdAndDelete
+    // 3. Clean up Lessons
+    const lessons = await Lesson.find({ course: course._id });
+    lessons.forEach((lesson) => {
+      if (lesson.fileUrl) {
+        // Delete the physical lesson file
+        fs.unlink(lesson.fileUrl, (err) => {
+          if (err) console.error(`Warning: Failed to delete lesson file ${lesson.fileUrl}:`, err);
+        });
+      }
+    });
+    // Delete all lesson records from the DB for this course
+    await Lesson.deleteMany({ course: course._id });
+
+    // 4. Clean up Submissions
+    const submissions = await Submission.find({ course: course._id });
+    submissions.forEach((submission) => {
+      if (submission.fileUrl) {
+        // Delete the physical submission zip file
+        fs.unlink(submission.fileUrl, (err) => {
+          if (err) console.error(`Warning: Failed to delete submission file ${submission.fileUrl}:`, err);
+        });
+      }
+    });
+    // Delete all submission records from the DB for this course
+    await Submission.deleteMany({ course: course._id });
+
+    // 5. Finally, delete the Course itself
     await Course.findOneAndDelete({ courseId: customCourseId });
 
     res.status(200).json({
       success: true,
-      message: "Course deleted successfully"
+      message: "Course, alongside all associated lessons, submissions, and files, were deleted successfully."
     });
   } catch (error) {
     next(error);

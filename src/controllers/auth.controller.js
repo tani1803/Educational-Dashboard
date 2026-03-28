@@ -56,7 +56,8 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "College ID and password are required" });
     }
 
-    const user = await User.findOne({ collegeId });
+    const user = await User.findOne({ collegeId }).select('+password');
+    
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }

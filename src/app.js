@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 
@@ -12,6 +13,8 @@ const courseRoutes = require("./routes/course.routes");
 const userRoutes = require("./routes/user.routes");
 
 const errorHandler = require("./utils/errorHandler");
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);

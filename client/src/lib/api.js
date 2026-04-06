@@ -13,11 +13,15 @@ api.interceptors.request.use((config) => {
 });
 
 export const authAPI = {
-  login: async (collegeId, password) => { // we use collegeId in the real backend, wait! the previous dummy used email. I need to fix login to accept collegeId and password.
+  login: async (collegeId, password) => {
     return api.post('/auth/login', { collegeId, password });
   },
   register: async (name, collegeId, email, password, role) => {
     return api.post('/auth/register', { name, collegeId, email, password, role });
+  },
+  // NEW — verify OTP after registration
+  verifyOTP: async (email, otp) => {
+    return api.post('/auth/verify-otp', { email, otp });
   }
 };
 

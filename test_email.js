@@ -1,0 +1,1 @@
+require('dotenv').config(); const { sendOTPEmail } = require('./src/services/email.service.js'); sendOTPEmail('tani.testing123@gmail.com', '123456').then(() => console.log('Sent')).catch(err => console.error(err));

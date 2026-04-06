@@ -56,11 +56,11 @@ exports.searchStudents = async (req, res, next) => {
         matchedNames.includes(normalize(student.name))
       );
 
-      console.log(`[TRIE DEBUG] Query: '${query}'`);
-      console.log(`[TRIE DEBUG] C++ rawOutput: '${rawOutput}'`);
-      console.log(`[TRIE DEBUG] matchedNames Array:`, matchedNames);
-      console.log(`[TRIE DEBUG] matchedStudents Length:`, matchedStudents.length);
-      console.log(`[TRIE DEBUG] Returning JSON Data: \n`, JSON.stringify(matchedStudents, null, 2));
+      // console.log(`[TRIE DEBUG] Query: '${query}'`);
+      // console.log(`[TRIE DEBUG] C++ rawOutput: '${rawOutput}'`);
+      // console.log(`[TRIE DEBUG] matchedNames Array:`, matchedNames);
+      // console.log(`[TRIE DEBUG] matchedStudents Length:`, matchedStudents.length);
+      // console.log(`[TRIE DEBUG] Returning JSON Data: \n`, JSON.stringify(matchedStudents, null, 2));
 
       // Return debugging metadata inside success array so we know it didn't fail natively
       return res.status(200).json({

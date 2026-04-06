@@ -1,6 +1,68 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { sendOTPEmail } = require("../services/email.service");
+
+// ── EMAIL REGEX ────────────────────────────────────────────────
+// Valid format: name_2401ai54@iitp.ac.in
+// - name: one or more letters
+// - underscore separator
+// - 4 digit year + 2 letter branch + 2-3 digit number
+// - @iitp.ac.in domain only
+const emailRegex = /^[a-zA-Z]+_[0-9]{4}[a-zA-Z]{2}[0-9]{2,3}@iitp\.ac\.in$/;
+
+// ── GENERATE 4 DIGIT OTP ───────────────────────────────────────
+const generateOTP = () => {
+  return Math.floor(1000 + Math.random() * 9000).toString(); // "1000" to "9999"
+};
+
+// ── VERIFY OTP ─────────────────────────────────────────────────
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    // 1. Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 2. Already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: "Account already verified. Please login." });
+    }
+
+    // 3. Check OTP expiry
+    if (!user.otpExpiry || user.otpExpiry < new Date()) {
+      return res.status(400).json({ message: "OTP has expired. Please register again." });
+    }
+
+    // 4. Compare OTP
+    const isMatch = await bcrypt.compare(otp, user.otp);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // 5. Mark as verified and clear OTP fields
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Account verified successfully. You can now login."
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 exports.register = async (req, res) => {
   try {
@@ -19,26 +81,49 @@ exports.register = async (req, res) => {
     }
 
     // Check duplicate collegeId or email
-    const userExists = await User.findOne({ $or: [{ email }, { collegeId }] });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+    let user = await User.findOne({ email });
+    if (user && user.isVerified) {
+        return res.status(400).json({ message: "User with this email already exists and is verified" });
+    }
+
+    const collegeIdExists = await User.findOne({ collegeId });
+    if (collegeIdExists && collegeIdExists.isVerified) {
+        return res.status(400).json({ message: "User with this college ID already exists and is verified" });
+    }
+
+    // If user exists but is not verified, we can either re-send OTP after updating details,
+    // or we just delete the unverified user and create a new one, or update the existing one.
+    // For simplicity, let's just delete the unverified one and re-create.
+    if (user && !user.isVerified) {
+        await User.deleteOne({ email });
+    }
+    if (collegeIdExists && !collegeIdExists.isVerified) {
+        await User.deleteOne({ collegeId });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const plainOTP = generateOTP();
+    const hashedOTP = await bcrypt.hash(plainOTP, 10);
 
-    const user = await User.create({
+    user = await User.create({
       name,
       collegeId,
       email,
       password: hashedPassword,
-      role
+      role,
+      otp: hashedOTP,
+      otpExpiry: new Date(Date.now() + 5 * 60 * 1000) // 5 mins expiry
     });
 
+    // Send OTP email
+    await sendOTPEmail(email, plainOTP);
+
     user.password = undefined;
+    user.otp = undefined;
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: "User registered successfully. Please check your email for the OTP.",
       user
     });
 
@@ -59,6 +144,10 @@ exports.login = async (req, res) => {
     
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(400).json({ message: "Account not verified. Please verify your OTP to login." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

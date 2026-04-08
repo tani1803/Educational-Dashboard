@@ -13,6 +13,8 @@ const courseRoutes = require("./routes/course.routes");
 const userRoutes = require("./routes/user.routes");
 const errorHandler = require("./utils/errorHandler");
 const placementRoutes = require("./routes/placement.routes");
+const dsaRoutes = require("./routes/placement/dsa.routes");
+const developmentRoutes = require("./routes/placement/development.routes");
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
@@ -21,6 +23,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/placement", placementRoutes);
+app.use("/api/placement/dsa", dsaRoutes);
+app.use("/api/placement/development", developmentRoutes);
 
 // Test route
 app.get("/", (req, res) => {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { placementAPI } from "@/lib/api";
-import { Search, Briefcase, ExternalLink, Calendar, MapPin, Tag } from "lucide-react";
+import { Search, Briefcase, ExternalLink, Calendar, MapPin, Tag, Code } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -68,7 +68,7 @@ export default function PlacementsFeed() {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col lg:flex-row gap-4 mb-8">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col lg:flex-row gap-4 mb-4">
         <form onSubmit={handleSearchSubmit} className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -102,6 +102,47 @@ export default function PlacementsFeed() {
         </div>
       </div>
 
+      <div className="mb-10">
+        <h2 className="text-xl font-bold text-slate-800 mb-4">Learning Roadmaps</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Link href="/dashboard/placements/dsa" className="block relative group overflow-hidden rounded-2xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-90 transition-opacity group-hover:opacity-100"></div>
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="relative p-6 h-full flex flex-col items-start text-white">
+              <div className="p-3 bg-white/20 rounded-xl mb-4 backdrop-blur-sm">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-1">DSA Roadmap</h3>
+              <p className="text-indigo-100 text-sm mb-4">Step-by-step guide with curated videos & senior questions.</p>
+              <div className="mt-auto inline-flex items-center text-xs font-semibold uppercase tracking-wider text-indigo-50 bg-white/20 px-3 py-1.5 rounded-lg">
+                View Roadmap &rarr;
+              </div>
+            </div>
+          </Link>
+          
+          <Link href="/dashboard/placements/development" className="block relative group overflow-hidden rounded-2xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 opacity-90 transition-opacity group-hover:opacity-100"></div>
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+            <div className="relative p-6 h-full flex flex-col items-start text-white">
+              <div className="p-3 bg-white/20 rounded-xl mb-4 backdrop-blur-sm">
+                <Code className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-1">Web Dev Roadmap</h3>
+              <p className="text-cyan-100 text-sm mb-4">Master full-stack development with curated tutorials.</p>
+              <div className="mt-auto inline-flex items-center text-xs font-semibold uppercase tracking-wider text-cyan-50 bg-white/20 px-3 py-1.5 rounded-lg">
+                View Roadmap &rarr;
+              </div>
+            </div>
+          </Link>
+          
+          <div className="bg-slate-100 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center opacity-70">
+            <h3 className="text-lg font-bold text-slate-400 mb-2">Machine Learning</h3>
+            <p className="text-sm text-slate-400">Coming Soon...</p>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-bold text-slate-800 mb-4">Recent Experiences</h2>
       {loading ? (
         <div className="flex justify-center my-12"><div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"></div></div>
       ) : posts.length === 0 ? (

@@ -7,7 +7,18 @@ const courseSchema = new mongoose.Schema(
       required: true,
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
+      validate: {
+        validator: function (v) {
+          // Format: [A-Z]{2}[1-4][1-2]\d{2}
+          // e.g. AI2101 → dept=AI, year=2, sem=1, id=01
+          return /^[A-Z]{2}[1-4][1-2]\d{2}$/.test(v);
+        },
+        message: (props) =>
+          `"${props.value}" is not a valid course code. ` +
+          `Expected format: 2 uppercase letters (dept) + year (1–4) + semester (1–2) + 2-digit ID. ` +
+          `Example: AI2101`
+      }
     },
     title: {
       type: String,

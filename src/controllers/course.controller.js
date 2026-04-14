@@ -5,11 +5,39 @@ const Lesson = require("../models/lesson.model");
 const Submission = require("../models/submission.model");
 const fs = require("fs");
 const Grade = require("../models/grade.model");
-// 1. Get All Courses
+const CURRENT_YEAR_PREFIX = 26; // same constant as user model
+
+// Helper: derive year-of-study from a student's collegeId
+function getYearOfStudy(collegeId) {
+  if (!collegeId || collegeId.length < 2) return null;
+  const yy = parseInt(collegeId.substring(0, 2), 10);
+  return CURRENT_YEAR_PREFIX - yy; // e.g. 26 - 24 = 2
+}
+
+// 1. Get All Courses (with optional dept + year filtering for students)
 exports.getCourses = async (req, res, next) => {
   try {
-    // Re-adding your getCourses logic based on your Day 5 notes
-    const courses = await Course.find()
+    const filter = {};
+
+    if (req.user && req.user.role === 'student') {
+      // Filter by the student's department
+      const User = require("../models/user.model");
+      const student = await User.findById(req.user.id).select('department collegeId');
+
+      if (student && student.department && student.department !== 'Unknown') {
+        filter.department = student.department;
+      }
+
+      // Filter by year: the 3rd character of the courseId is the target year digit
+      // e.g. AI2101 → year digit = '2', so only show to 2nd-year students
+      const year = getYearOfStudy(student?.collegeId);
+      if (year && year >= 1 && year <= 4) {
+        // Use regex to match courses whose 3rd character equals the student's year
+        filter.courseId = new RegExp(`^[A-Z]{2}${year}`);
+      }
+    }
+
+    const courses = await Course.find(filter)
       .populate("instructor", "name email collegeId")
       .select("-students -tas");
     return success(res, "Courses fetched successfully", courses);
@@ -234,3 +262,32 @@ exports.getMyCourses = async (req, res, next) => {
     next(error);
   }
 };
+
+// 8. Get all assignments (lessons) across all enrolled courses for the logged-in student
+exports.getMyAssignments = async (req, res, next) => {
+  try {
+    // Find all courses the student is enrolled in
+    const enrolledCourses = await Course.find({ students: req.user.id }).select('_id courseId title');
+
+    if (!enrolledCourses.length) {
+      return res.status(200).json({ success: true, count: 0, data: [] });
+    }
+
+    const courseIds = enrolledCourses.map(c => c._id);
+    const courseMap = {};
+    enrolledCourses.forEach(c => { courseMap[c._id.toString()] = c.title; });
+
+    const lessons = await Lesson.find({ course: { $in: courseIds } })
+      .sort({ createdAt: -1 });
+
+    // Attach course title to each lesson for display
+    const data = lessons.map(l => ({
+      ...l.toObject(),
+      courseName: courseMap[l.course.toString()] || 'Unknown Course'
+    }));
+
+    return res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    next(error);
+  }
+};

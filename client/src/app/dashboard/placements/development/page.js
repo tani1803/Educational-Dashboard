@@ -308,7 +308,7 @@ export default function DevRoadmap() {
                  <div className="text-center py-12 px-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
                     <Code className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <h4 className="text-slate-800 font-medium">No tasks yet</h4>
-                    <p className="text-slate-500 text-sm mt-1">Seniors haven't added practice tasks for this module yet.</p>
+                    <p className="text-slate-500 text-sm mt-1">Seniors haven&apos;t added practice tasks for this module yet.</p>
                  </div>
               ) : (
                 <div className="space-y-3">

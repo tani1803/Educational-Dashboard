@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authAPI } from "@/lib/api";
 import { ShieldCheck, MailCheck } from "lucide-react";
 
-export default function VerifyOTPPage() {
+function VerifyOTPContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
 
-  // 4 separate input boxes for OTP digits
   const [otp, setOtp] = useState(["", "", "", ""]);
   const inputs = useRef([]);
 
@@ -18,34 +17,27 @@ export default function VerifyOTPPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Auto-focus first input on mount
   useEffect(() => {
     inputs.current[0]?.focus();
   }, []);
 
-  // Redirect to login if no email in URL
   useEffect(() => {
     if (!email) {
       router.push("/register");
     }
-  }, [email]);
+  }, [email, router]);
 
   const handleChange = (value, index) => {
-    // Only allow single digit
     if (!/^\d?$/.test(value)) return;
-
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-
-    // Auto-move to next input
     if (value && index < 3) {
       inputs.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
-    // Move back on backspace if current box is empty
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputs.current[index - 1]?.focus();
     }
@@ -55,13 +47,11 @@ export default function VerifyOTPPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-
     const otpString = otp.join("");
     if (otpString.length < 4) {
       setError("Please enter the complete 4-digit OTP.");
       return;
     }
-
     setLoading(true);
     try {
       await authAPI.verifyOTP(email, otpString);
@@ -78,7 +68,6 @@ export default function VerifyOTPPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 p-4">
       <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-10 w-full max-w-md text-center">
 
-        {/* Icon */}
         <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
           <MailCheck className="w-8 h-8 text-indigo-600" />
         </div>
@@ -104,7 +93,6 @@ export default function VerifyOTPPage() {
         )}
 
         <form onSubmit={handleVerify}>
-          {/* 4 OTP input boxes */}
           <div className="flex justify-center gap-4 mb-8">
             {otp.map((digit, index) => (
               <input
@@ -141,5 +129,17 @@ export default function VerifyOTPPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function VerifyOTPPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50">
+        <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+      </div>
+    }>
+      <VerifyOTPContent />
+    </Suspense>
   );
 }

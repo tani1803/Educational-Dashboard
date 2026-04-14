@@ -47,7 +47,7 @@ function SearchPageContent() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
           <Search className="w-6 h-6 text-indigo-600" /> 
-          Search Results for "{query || "..."}"
+          Search Results for &quot;{query || "..."}&quot;
         </h1>
         <p className="text-slate-500 mt-1">
           Showing matching courses and assignments from across the platform.

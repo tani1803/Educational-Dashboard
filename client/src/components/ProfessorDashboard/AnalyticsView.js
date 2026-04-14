@@ -41,7 +41,7 @@ const AnalyticsView = ({ distributionData = [], atRiskStudents = [], classAverag
           <AlertTriangle className="w-5 h-5 text-red-500" />
           At-Risk Students
         </h2>
-        <p className="text-xs text-gray-500 font-medium mb-4 uppercase tracking-wider">finalScore < 50%</p>
+        <p className="text-xs text-gray-500 font-medium mb-4 uppercase tracking-wider">{"finalScore < 50%"}</p>
         
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
           {atRiskStudents.length === 0 ? (

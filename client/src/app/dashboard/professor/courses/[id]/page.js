@@ -175,7 +175,7 @@ export default function ProfessorCourseDetail({ params }) {
             
             {assignments.length === 0 ? (
               <div className="text-slate-500 border border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50">
-                You haven't posted any assignments.
+                You haven&apos;t posted any assignments.
               </div>
             ) : (
                <div className="space-y-4">
@@ -277,7 +277,7 @@ export default function ProfessorCourseDetail({ params }) {
               ) : (
                 searchQuery && !searching && (
                   <div className="text-center p-4 bg-orange-50 text-orange-600 border border-orange-100 rounded-xl text-sm">
-                    No students matched '{searchQuery}'. 
+                    No students matched &apos;{searchQuery}&apos;. 
                     {typeof window !== 'undefined' && window.lastSearchDebug && (
                       <span className="block mt-2 font-mono text-xs text-orange-400 break-all text-left bg-orange-100 p-2 rounded">
                         Raw C++ Output: {JSON.stringify(window.lastSearchDebug.rawOutput)}<br/>

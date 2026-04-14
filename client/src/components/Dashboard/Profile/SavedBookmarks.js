@@ -34,7 +34,7 @@ export default function SavedBookmarks() {
         <div className="flex justify-center py-12"><div className="w-8 h-8 rounded-full border-2 border-t-[#2d2a26] animate-spin"></div></div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12 text-[#736d65] font-serif italic">
-          You haven't bookmarked any placement posts yet.
+          You haven&apos;t bookmarked any placement posts yet.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

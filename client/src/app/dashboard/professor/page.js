@@ -250,7 +250,7 @@ export default function ProfessorDashboard() {
         <div className="flex justify-center my-12"><div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"></div></div>
       ) : courses.length === 0 ? (
         <div className="bg-white p-8 rounded-xl text-center border shadow-sm mb-10 text-slate-500">
-          You haven't created any courses yet. Click "Create Course" to get started!
+          You haven&apos;t created any courses yet. Click &quot;Create Course&quot; to get started!
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -55,6 +55,9 @@ export const coursesAPI = {
 };
 
 export const assignmentsAPI = {
+  getMyAssignments: async () => {
+    return api.get('/courses/my/assignments');
+  },
   getAssignments: async (courseId) => {
     return api.get(`/courses/${courseId}/lessons`);
   },

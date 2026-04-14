@@ -15,7 +15,6 @@ exports.protect = (req, res, next) => {
       return res.status(401).json({ message: "Not authorized" });
     }
   }
-
   if (!token) {
     return res.status(401).json({ message: "No token" });
   }
@@ -26,7 +25,6 @@ exports.restrictTo = (...roles) => {
     try {
       let userRole = req.user.role;
       
-      // If the old JWT token didn't contain a role, dynamically look it up from the DB
       if (!userRole) {
         const User = require('../models/user.model');
         const user = await User.findById(req.user.id);

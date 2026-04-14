@@ -134,47 +134,6 @@ export default function PlacementsFeed() {
         </div>
       </div>
 
-      {/* FILTERBAR */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-6">Interview Database</h2>
-        <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row items-center gap-2">
-          
-          <form onSubmit={handleSearchSubmit} className="flex-1 w-full bg-slate-50 rounded-xl relative flex items-center">
-            <div className="absolute left-4"><Search className="w-4 h-4 text-slate-400" /></div>
-            <input
-              type="text"
-              className="w-full pl-11 pr-4 py-3.5 bg-transparent border-none text-slate-800 outline-none text-sm font-medium"
-              placeholder="Search company or role..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
-
-          <div className="flex w-full lg:w-auto gap-2">
-             <div className="relative flex-1 lg:w-48 bg-slate-50 rounded-xl flex items-center">
-                <div className="absolute left-4"><Tag className="w-4 h-4 text-slate-400" /></div>
-                <input
-                  type="text"
-                  className="w-full pl-11 pr-4 py-3.5 bg-transparent border-none text-sm outline-none font-medium placeholder:text-slate-400"
-                  placeholder="Topic..."
-                  value={tagFilter}
-                  onChange={(e) => setTagFilter(e.target.value)}
-                />
-             </div>
-             <select 
-               className="bg-slate-50 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none text-slate-700 cursor-pointer border-none"
-               value={yearFilter}
-               onChange={(e) => setYearFilter(e.target.value)}
-             >
-               <option value="">All Years</option>
-               <option value="2024">Class 2024</option>
-               <option value="2025">Class 2025</option>
-               <option value="2026">Class 2026</option>
-               <option value="2027">Class 2027</option>
-             </select>
-          </div>
-        </div>
-      </div>
 
       <div className="mb-14">
         <div className="flex items-center justify-between mb-6">

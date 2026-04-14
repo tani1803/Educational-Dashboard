@@ -444,7 +444,7 @@ export default function AlumniDashboard() {
               </div>
               <div>
                 <h4 className="font-bold text-slate-800 group-hover:text-amber-700 transition-colors">Share Tech Update</h4>
-                <p className="text-sm text-slate-500">Share your company's recent tech news</p>
+                <p className="text-sm text-slate-500">Share your company&apos;s recent tech news</p>
               </div>
               <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-amber-500 ml-auto transition-colors" />
             </button>

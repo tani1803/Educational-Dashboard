@@ -25,6 +25,7 @@ export default function ProfessorCourseDetail({ params }) {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [file, setFile] = useState(null);
+  const [uploadType, setUploadType] = useState("assignment");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -107,13 +108,14 @@ export default function ProfessorCourseDetail({ params }) {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", desc);
+    formData.append("type", uploadType);
     formData.append("file", file);
 
     setSubmitting(true);
     try {
       await assignmentsAPI.createAssignment(courseCode, formData);
-      alert("Lesson/Assignment Published Successfully!");
-      setTitle(""); setDesc(""); setFile(null);
+      alert(`${uploadType === 'material' ? 'Material' : 'Assignment'} Published Successfully!`);
+      setTitle(""); setDesc(""); setFile(null); setUploadType("assignment");
       setShowAddForm(false);
       loadAssignments(courseCode);
     } catch (err) {
@@ -156,13 +158,17 @@ export default function ProfessorCourseDetail({ params }) {
           {showAddForm && (
             <form onSubmit={submitNewAssignment} className="bg-white rounded-2xl border border-indigo-100 shadow-sm p-6 relative overflow-hidden">
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600"></div>
-                <h3 className="font-bold text-slate-800 mb-4">Create New Assignment</h3>
+                <h3 className="font-bold text-slate-800 mb-4">Create New Material/Assignment</h3>
                 <div className="space-y-4">
-                  <input type="text" placeholder="Assignment Title" className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                  <select className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white" value={uploadType} onChange={(e) => setUploadType(e.target.value)}>
+                    <option value="assignment">Assignment</option>
+                    <option value="material">Lecture Material / PPT</option>
+                  </select>
+                  <input type="text" placeholder="Title" className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value={title} onChange={(e) => setTitle(e.target.value)} required />
                   <textarea placeholder="Description" className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" value={desc} onChange={(e) => setDesc(e.target.value)} required rows={3}></textarea>
                   <input type="file" className="w-full p-3 border rounded-xl bg-slate-50" onChange={(e) => setFile(e.target.files[0])} required />
                   <button type="submit" disabled={submitting} className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white w-full py-2.5 rounded-xl font-medium transition-colors">
-                    {submitting ? 'Publishing...' : 'Publish Assignment'}
+                    {submitting ? 'Publishing...' : 'Publish'}
                   </button>
                 </div>
             </form>
@@ -170,58 +176,63 @@ export default function ProfessorCourseDetail({ params }) {
 
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-4">
-              <Calendar className="w-5 h-5 text-indigo-500" /> Managed Assignments 
+              <Calendar className="w-5 h-5 text-indigo-500" /> Managed Content 
             </h2>
             
             {assignments.length === 0 ? (
               <div className="text-slate-500 border border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50">
-                You haven&apos;t posted any assignments.
+                You haven&apos;t posted any content yet.
               </div>
             ) : (
                <div className="space-y-4">
-                  {assignments.map((asmnt) => (
-                    <div key={asmnt._id} className="border border-slate-100 rounded-xl p-5 hover:bg-slate-50 transition-colors">
-                      <h3 className="font-bold text-slate-800 text-lg">{asmnt.title}</h3>
-                      <p className="text-sm text-slate-500 mt-1">{asmnt.description}</p>
-                      
-                      {asmnt.fileUrl && (
-                         <div className="mt-4 flex gap-4 text-sm font-semibold text-indigo-600">
-                          <a href={`http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || '5000'}/${asmnt.fileUrl}`} target="_blank" className="bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors">View Uploaded Material</a>
-                         </div>
-                      )}
-                    </div>
-                  ))}
-               </div>
-            )}
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mt-8">
-            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-4">
-              <CheckCircle className="w-5 h-5 text-indigo-500" /> Student Submissions
-            </h2>
-            
-            {loadingSubmissions ? (
-              <div className="text-center p-6 text-slate-400">Loading tracking lists...</div>
-            ) : submissions.length === 0 ? (
-              <div className="text-slate-500 border border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50">
-                No student submissions found.
-              </div>
-            ) : (
-               <div className="space-y-4">
-                 {submissions.map((sub) => (
-                    <div key={sub._id} className="border border-slate-100 rounded-xl p-5 hover:bg-slate-50 transition-colors flex justify-between items-center group">
-                      <div>
-                        <div className="flex gap-2 items-center mb-1">
-                          <h3 className="font-bold text-slate-800">{sub.assignmentTitle}</h3>
+                  {assignments.map((asmnt) => {
+                    const isMaterial = asmnt.type === 'material';
+                    const itemSubmissions = submissions.filter(sub => sub.assignmentTitle === asmnt.title);
+                    
+                    return (
+                      <div key={asmnt._id} className="border border-slate-100 rounded-xl p-5 hover:bg-slate-50 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            {asmnt.title}
+                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${isMaterial ? 'bg-orange-100 text-orange-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                              {isMaterial ? 'Material' : 'Assignment'}
+                            </span>
+                          </h3>
                         </div>
-                        <p className="text-sm text-slate-500">Submitted by: <span className="font-medium text-slate-700">{sub.student?.name} ({sub.student?.collegeId})</span></p>
+                        <p className="text-sm text-slate-500 mt-1">{asmnt.description}</p>
                         
-                        {sub.fileUrl && (
-                          <a href={`http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || '5000'}/${sub.fileUrl}`} target="_blank" className="text-xs text-indigo-600 font-semibold mt-3 inline-block hover:underline">Download Submission File</a>
+                        {asmnt.fileUrl && (
+                          <div className="mt-4 flex gap-4 text-sm font-semibold text-indigo-600 mb-4 border-b border-slate-100 pb-4">
+                            <a href={`http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || '5000'}/${asmnt.fileUrl}`} target="_blank" className="bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors">View Uploaded Material</a>
+                          </div>
+                        )}
+                        
+                        {!isMaterial && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-emerald-500" /> Student Submissions ({itemSubmissions.length})
+                            </h4>
+                            {itemSubmissions.length === 0 ? (
+                              <p className="text-xs text-slate-400 italic">No submissions yet.</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {itemSubmissions.map(sub => (
+                                  <div key={sub._id} className="bg-white border border-slate-200 rounded-lg p-3 flex justify-between items-center">
+                                    <div>
+                                      <p className="text-sm font-medium text-slate-800">{sub.student?.name} <span className="text-xs text-slate-500">({sub.student?.collegeId})</span></p>
+                                    </div>
+                                    {sub.fileUrl && (
+                                      <a href={`http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || '5000'}/${sub.fileUrl}`} target="_blank" className="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-1 round-md hover:bg-indigo-100 transition-colors rounded">Download</a>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                </div>
             )}
           </div>

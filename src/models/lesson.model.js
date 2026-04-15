@@ -11,6 +11,11 @@ const lessonSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    type: {
+      type: String,
+      enum: ['assignment', 'material'],
+      default: 'assignment'
+    },
     fileUrl: {
       // This will store the path to the file on your server (e.g., "uploads/169000-math.pdf")
       type: String, 

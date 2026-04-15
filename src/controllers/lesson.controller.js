@@ -28,6 +28,7 @@ exports.createLesson = async (req, res, next) => {
     const lesson = await Lesson.create({
       title: req.body.title,
       description: req.body.description,
+      type: req.body.type || 'assignment',
       fileUrl: req.file.path, // Multer gives us the path here!
       course: course._id,     // Link to the course's MongoDB _id
       instructor: req.user.id // Link to the logged-in professor

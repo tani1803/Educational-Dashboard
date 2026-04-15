@@ -21,10 +21,11 @@ exports.test = (req, res) => {
 exports.getMyPlacementRole = async (req, res) => {
   const User = require("../models/user.model");
   const placementRole = getPlacementRole(req.user.collegeId || "");
-  const user = await User.findById(req.user.id).select("isTpcCoord");
+  const user = await User.findById(req.user.id).select("isTpcCoord isHOD");
   return success(res, "Placement role fetched", { 
     placementRole, 
-    isTpcCoord: user?.isTpcCoord || false 
+    isTpcCoord: user?.isTpcCoord || false,
+    isHOD: user?.isHOD || false
   });
 };
 

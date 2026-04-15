@@ -86,6 +86,9 @@ exports.register = async (req, res) => {
         const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
         
         userExists.name = name;
+        userExists.role = role;
+        userExists.collegeId = collegeId;
+        userExists.email = email;
         userExists.password = await bcrypt.hash(password, 10);
         userExists.department = department;
         userExists.otp = await bcrypt.hash(otp, 10);
@@ -241,8 +244,11 @@ exports.login = async (req, res) => {
 
     user.password = undefined;
 
-    // ── Use calculated role if it's more specific (like alumni) ────────
-    const effectiveRole = placementRole === "alumni" ? "alumni" : user.role;
+    // ── Use calculated role for students who become seniors/alumni ────────
+    // But keep "professor" and "ta" roles as they are.
+    const effectiveRole = (user.role === "professor" || user.role === "ta") 
+      ? user.role 
+      : (placementRole === "alumni" ? "alumni" : user.role);
 
     res.json({
       success: true,

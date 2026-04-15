@@ -51,26 +51,21 @@ exports.restrictToAlumni = (req, res, next) => {
 exports.attachPlacementRole = async (req, res, next) => {
   req.placementRole = exports.getPlacementRole(req.user.collegeId || "");
 
-  // For seniors, check DB for TPC coordinator approval
-  if (req.placementRole === "senior" || req.user.role === "alumni") {
-    try {
-      const User = require("../models/user.model");
+  try {
+    const User = require("../models/user.model");
+
+    if (req.user.role === "professor") {
+      // Professors: fetch isHOD only
+      const user = await User.findById(req.user.id).select("isHOD");
+      req.isTpcCoord = false;
+      req.isHOD = user?.isHOD || false;
+    } else {
+      // Students, TAs, seniors, alumni: fetch isTpcCoord (and isHOD if applicable)
       const user = await User.findById(req.user.id).select("isTpcCoord isHOD");
       req.isTpcCoord = user?.isTpcCoord || false;
       req.isHOD = user?.isHOD || false;
-    } catch (e) {
-      req.isTpcCoord = false;
-      req.isHOD = false;
     }
-  } else if (req.user.role === "professor") {
-    try {
-      const User = require("../models/user.model");
-      const user = await User.findById(req.user.id).select("isHOD");
-      req.isHOD = user?.isHOD || false;
-    } catch (e) {
-      req.isHOD = false;
-    }
-  } else {
+  } catch (e) {
     req.isTpcCoord = false;
     req.isHOD = false;
   }

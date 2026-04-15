@@ -29,11 +29,15 @@ const tedTalkSchema = new mongoose.Schema(
       trim: true,
       default: ""
     },
-    // Optional: YouTube/external link for TED talks
-    videoLink: {
+    // Link where the session will be conducted
+    sessionLink: {
       type: String,
       trim: true,
       default: ""
+    },
+    // The date and time when the session will be conducted
+    dateTime: {
+      type: Date
     },
     tags: [{ type: String, trim: true }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -43,7 +47,23 @@ const tedTalkSchema = new mongoose.Schema(
         text: { type: String, required: true },
         createdAt: { type: Date, default: Date.now }
       }
-    ]
+    ],
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"
+    },
+    rejectionReason: {
+      type: String,
+      default: ""
+    },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    reviewedAt: {
+      type: Date
+    }
   },
   { timestamps: true }
 );

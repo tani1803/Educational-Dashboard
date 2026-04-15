@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import {
   Mic2, Briefcase, LogOut, Plus, X, Heart, MessageSquare,
   Trash2, ChevronRight, Building2, Tag, ExternalLink, Send,
-  Users, BookOpen, Trophy, Sparkles
+  Users, BookOpen, Trophy, Sparkles, CheckCircle2
 } from "lucide-react";
-import { alumniAPI, userAPI } from "@/lib/api";
+import { alumniAPI, userAPI, placementAPI } from "@/lib/api";
 
 // ─── helpers ────────────────────────────────────────────────────
 function timeAgo(date) {
@@ -74,6 +74,12 @@ function TalkCard({ talk, currentUser, onLike, onComment, onDelete }) {
             <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${isTedTalk ? "bg-purple-50 text-purple-600 border border-purple-100" : "bg-amber-50 text-amber-600 border border-amber-100"}`}>
               {isTedTalk ? <><Mic2 className="w-3 h-3" /> TED Talk</> : <><Building2 className="w-3 h-3" /> Tech Update</>}
             </span>
+            {/* Status Badge */}
+            {talk.status && talk.status !== "approved" && (
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${talk.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                {talk.status}
+              </span>
+            )}
             {/* Delete */}
             {isAuthor && (
               <button onClick={() => onDelete(talk._id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
@@ -96,12 +102,15 @@ function TalkCard({ talk, currentUser, onLike, onComment, onDelete }) {
         {/* Body */}
         <p className="text-slate-600 text-sm leading-relaxed line-clamp-4 mb-4">{talk.body}</p>
 
-        {/* Video link */}
-        {talk.videoLink && (
-          <a href={talk.videoLink} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-700 mb-4 w-fit group">
-            <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" /> Watch / Read
-          </a>
+        {/* Session details */}
+        {talk.sessionLink && talk.dateTime && (
+          <div className="flex flex-col gap-2 mb-4 bg-purple-50/50 p-4 rounded-2xl border border-purple-100">
+            <p className="text-xs font-bold text-purple-700 uppercase tracking-wide">📅 Scheduled For: {new Date(talk.dateTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</p>
+            <a href={talk.sessionLink} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 w-fit group bg-white px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all">
+              <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" /> Join Live Session
+            </a>
+          </div>
         )}
 
         {/* Tags */}
@@ -176,7 +185,7 @@ function TalkCard({ talk, currentUser, onLike, onComment, onDelete }) {
 // ─── Create Post Modal ────────────────────────────────────────────
 function PostModal({ type, onClose, onSubmit, isAlumni }) {
   const isTedTalk = type === "tedtalk";
-  const [form, setForm] = useState({ title: "", body: "", company: "", videoLink: "", tags: "" });
+  const [form, setForm] = useState({ title: "", body: "", company: "", sessionLink: "", dateTime: "", tags: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -186,7 +195,7 @@ function PostModal({ type, onClose, onSubmit, isAlumni }) {
       title: form.title,
       body: form.body,
       tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
-      ...(isTedTalk ? { videoLink: form.videoLink } : { company: form.company })
+      ...(isTedTalk ? { sessionLink: form.sessionLink, dateTime: form.dateTime } : { company: form.company })
     };
     await onSubmit(payload);
     setSubmitting(false);
@@ -241,12 +250,20 @@ function PostModal({ type, onClose, onSubmit, isAlumni }) {
           </div>
 
           {isTedTalk && (
-            <div>
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1">Video / Article Link <span className="text-slate-400 normal-case font-normal">(optional)</span></label>
-              <input type="url" value={form.videoLink}
-                onChange={e => setForm({ ...form, videoLink: e.target.value })}
-                placeholder="https://youtu.be/..."
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm font-medium" />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1">Date & Time</label>
+                <input required type="datetime-local" value={form.dateTime}
+                  onChange={e => setForm({ ...form, dateTime: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm font-medium" />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1">Session Link</label>
+                <input required type="url" value={form.sessionLink}
+                  onChange={e => setForm({ ...form, sessionLink: e.target.value })}
+                  placeholder="https://meet.google.com/..."
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm font-medium" />
+              </div>
             </div>
           )}
 
@@ -276,42 +293,72 @@ export default function AlumniDashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [placementRole, setPlacementRole] = useState("");
+  const [isTpcCoord, setIsTpcCoord] = useState(false);
+  const [isHOD, setIsHOD] = useState(false);
+
   const [talks, setTalks] = useState([]);
+  const [pendingTalks, setPendingTalks] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all | tedtalk | techupdate
-  const [modal, setModal] = useState(null);  // null | "tedtalk" | "techupdate"
+  const [filter, setFilter] = useState("all");
+  const [modal, setModal] = useState(null);
   const feedRef = useRef(null);
-
-  // Auth check
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    const pRole = localStorage.getItem("placementRole") || "";
-
-    if (!token) { router.push("/"); return; }
-    if (storedUser) setUser(JSON.parse(storedUser));
-    setPlacementRole(pRole);
-  }, [router]);
 
   const isAlumni = user?.role === "alumni" || placementRole === "alumni";
   const isSenior = placementRole === "senior";
   const canPost = isAlumni || isSenior;
 
+  // Auth check and load data
+  useEffect(() => {
+    async function loadData() {
+      const token = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+
+      if (!token || !storedUser) { router.push("/"); return; }
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
+      setLoading(true);
+      try {
+        const [roleRes, talksRes] = await Promise.all([
+          placementAPI.getPlacementRole(),
+          alumniAPI.getAllTalks()
+        ]);
+
+        const rData = roleRes.data?.data;
+        setPlacementRole(rData?.placementRole || "");
+
+        const isTpc = rData?.isTpcCoord || false;
+        const hod = rData?.isHOD || false;
+
+        setIsTpcCoord(isTpc);
+        setIsHOD(hod);
+
+        setTalks(talksRes.data?.data || []);
+
+        if (isTpc || hod) {
+          const pendingRes = await alumniAPI.getPendingTalks();
+          setPendingTalks(pendingRes.data?.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [router]);
+
   const fetchTalks = async () => {
-    setLoading(true);
     try {
       const res = await alumniAPI.getAllTalks();
       setTalks(res.data?.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      if (isTpcCoord || isHOD) {
+        const pRes = await alumniAPI.getPendingTalks();
+        setPendingTalks(pRes.data?.data || []);
+      }
+    } catch (err) { console.error(err); }
   };
-
-  useEffect(() => {
-    if (user) fetchTalks();
-  }, [user]);
 
   const handleLike = async (id) => {
     try {
@@ -352,9 +399,21 @@ export default function AlumniDashboard() {
     router.push("/");
   };
 
+  const handleReview = async (id, status) => {
+    try {
+      await alumniAPI.reviewTalk(id, status);
+      fetchTalks();
+    } catch (err) { alert("Failed to review post."); }
+  };
+
   const filtered = talks.filter(t => {
-    // Strictly show only what I posted
-    const isMine = t.author?._id === user._id || t.author === user._id;
+    if (filter !== "all" && t.type !== filter) return false;
+
+    // Everyone sees approved posts
+    if (t.status === "approved") return true;
+
+    // Only author sees their own non-approved posts in the main feed
+    const isMine = t.author?._id === user?._id || t.author === user?._id;
     return isMine;
   });
 
@@ -472,28 +531,82 @@ export default function AlumniDashboard() {
             <div className="flex justify-center py-20">
               <div className="w-10 h-10 border-4 border-purple-100 border-t-purple-500 rounded-full animate-spin" />
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-100 py-20 text-center shadow-sm">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mic2 className="w-9 h-9 text-slate-300" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">No posts yet</h3>
-              <p className="text-slate-500 text-sm max-w-xs mx-auto">
-                {canPost ? "Be the first to share something with the community!" : "Check back soon for alumni insights and industry updates."}
-              </p>
-            </div>
           ) : (
-            <div className="space-y-6">
-              {filtered.map(talk => (
-                <TalkCard
-                  key={talk._id}
-                  talk={talk}
-                  currentUser={user}
-                  onLike={handleLike}
-                  onComment={handleComment}
-                  onDelete={handleDelete}
-                />
-              ))}
+            <div className="flex flex-col gap-6">
+
+              {/* ── Pending Approvals Section for Moderators ── */}
+              {(isTpcCoord || isHOD) && pendingTalks.length > 0 && (
+                <div className="mb-8 bg-indigo-50/50 p-6 md:p-8 rounded-[40px] border border-indigo-100">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        Pending Approvals
+                      </h2>
+                      <p className="text-slate-500 text-sm mt-1 font-medium ml-13">Review and approve alumni submissions.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {pendingTalks.map((talk) => (
+                      <div key={talk._id} className="bg-white p-6 rounded-3xl border border-indigo-50 shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
+                              {talk.type === 'tedtalk' ? 'TED Talk' : 'Tech Update'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold">Posted by {talk.author?.name}</span>
+                          </div>
+                          <h3 className="text-lg font-bold text-slate-800 mb-1">{talk.title}</h3>
+                          <p className="text-sm text-slate-500 line-clamp-1 italic">"{talk.body.substring(0, 100)}..."</p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleReview(talk._id, "rejected")}
+                            className="px-6 py-2.5 rounded-xl border-2 border-slate-100 text-slate-500 font-bold text-sm hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all"
+                          >
+                            Decline
+                          </button>
+                          <button
+                            onClick={() => handleReview(talk._id, "approved")}
+                            className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all"
+                          >
+                            Agree & Publish
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {filtered.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-slate-100 py-20 text-center shadow-sm">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mic2 className="w-9 h-9 text-slate-300" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">No posts yet</h3>
+                  <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                    {canPost ? "Be the first to share something with the community!" : "Check back soon for alumni insights and industry updates."}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {filtered.map(talk => (
+                    <TalkCard
+                      key={talk._id}
+                      talk={talk}
+                      currentUser={user}
+                      onLike={handleLike}
+                      onComment={handleComment}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

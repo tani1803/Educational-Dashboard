@@ -217,11 +217,17 @@ export const mockOaAPI = {
 };
 
 export const alumniAPI = {
-  // Feed
+  // Post Retrieval
+  getMyPosts: async () => api.get('/alumni/my-posts'),
   getAllTalks: async () => api.get('/alumni/talks'),
   getTalkById: async (id) => api.get(`/alumni/talks/${id}`),
 
-  // Create
+  // Session
+  createSession: async (data) => api.post('/alumni/session', data),
+  getAllSessions: async () => api.get('/alumni/sessions'),
+  registerForSession: async (id) => api.post(`/alumni/session/${id}/register`),
+
+  // Create Talks
   createTedTalk: async (data) => api.post('/alumni/talks/ted-talk', data),
   createTechUpdate: async (data) => api.post('/alumni/talks/tech-update', data),
 
@@ -230,7 +236,12 @@ export const alumniAPI = {
   addComment: async (id, text) => api.post(`/alumni/talks/${id}/comment`, { text }),
 
   // Delete
-  deleteTalk: async (id) => api.delete(`/alumni/talks/${id}`)
+  deleteTalk: async (id) => api.delete(`/alumni/talks/${id}`),
+
+  // TPC Review
+  getPendingPosts: async () => api.get('/alumni/pending'),
+  reviewTalk: async (id, status, rejectionReason) => api.patch(`/alumni/talks/${id}/review`, { status, rejectionReason }),
+  reviewSession: async (id, status, rejectionReason) => api.patch(`/alumni/session/${id}/review`, { status, rejectionReason })
 };
 
 export const tpcAPI = {

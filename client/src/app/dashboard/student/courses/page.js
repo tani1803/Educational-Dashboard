@@ -1,9 +1,10 @@
 "use client";
 
 import DashboardLayout from "@/components/Layout/DashboardLayout";
-import { BookMarked, ArrowRight, PlusCircle } from "lucide-react";
+import { BookMarked, ArrowRight, PlusCircle, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { coursesAPI } from "@/lib/api";
+import api from "@/lib/api"; // Added for direct request endpoint access
 import Link from "next/link";
 
 // Single accent: teal — #0d9488
@@ -13,8 +14,17 @@ export default function StudentCourses() {
   const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [enrollStatus, setEnrollStatus] = useState({});
+  const [taRequestStatus, setTaRequestStatus] = useState({});
+  const [isMtech, setIsMtech] = useState(false);
 
   useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user?.collegeId && user.collegeId.substring(2, 4) === '11') {
+        setIsMtech(true);
+      }
+    }
     fetchData();
   }, []);
 
@@ -44,6 +54,19 @@ export default function StudentCourses() {
     }
   };
 
+  const handleTARequest = async (courseId) => {
+    setTaRequestStatus((prev) => ({ ...prev, [courseId]: "loading" }));
+    try {
+      await api.post("/ta-requests/request", { courseId });
+      setTaRequestStatus((prev) => ({ ...prev, [courseId]: "success" }));
+      alert(`TA Request for ${courseId} sent successfully!`);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to send TA request.");
+      setTaRequestStatus((prev) => ({ ...prev, [courseId]: "error" }));
+    }
+  };
+
   const enrolledIds = courses.map((c) => c._id);
   const availableCourses = allCourses.filter((c) => !enrolledIds.includes(c._id));
 
@@ -51,10 +74,22 @@ export default function StudentCourses() {
     <DashboardLayout requiredRole="student">
       {/* Page Header */}
       <div className="mb-8 pb-6 border-b border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900">My Courses</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          View your enrolled courses and browse available ones to join.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">My Courses</h1>
+            <p className="text-slate-500 mt-1 text-sm">
+              View your enrolled courses and browse available ones to join.
+            </p>
+          </div>
+          {isMtech && (
+            <Link
+              href="/dashboard/ta/courses"
+              className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg font-semibold text-sm transition-colors border border-indigo-200"
+            >
+              TA Assignments Portal
+            </Link>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -155,27 +190,42 @@ export default function StudentCourses() {
 
                     {/* Footer */}
                     <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <p className="text-xs text-slate-400 font-medium">
-                        By {c.instructor?.name || "Unknown"}
+                      <p className="text-xs text-slate-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis mr-2 max-w-[100px]">
+                        By {c.instructor?.name?.split(' ')[0] || "Unknown"}
                       </p>
-                      <button
-                        onClick={() => handleEnroll(c.courseId)}
-                        disabled={
-                          enrollStatus[c.courseId] === "loading" ||
-                          enrollStatus[c.courseId] === "success"
-                        }
-                        className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        {enrollStatus[c.courseId] === "loading"
-                          ? "Enrolling…"
-                          : enrollStatus[c.courseId] === "success"
-                          ? "Enrolled!"
-                          : (
-                            <>
-                              <PlusCircle className="w-3.5 h-3.5" /> Enroll
-                            </>
-                          )}
-                      </button>
+                      <div className="flex gap-2">
+                        {isMtech && (
+                          <button
+                            onClick={() => handleTARequest(c.courseId)}
+                            disabled={
+                              taRequestStatus[c.courseId] === "loading" ||
+                              taRequestStatus[c.courseId] === "success"
+                            }
+                            title="Request to TA for this course"
+                            className="flex items-center gap-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-200 text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors"
+                          >
+                            {taRequestStatus[c.courseId] === "loading" ? "..." : taRequestStatus[c.courseId] === "success" ? "Sent" : <UserPlus className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleEnroll(c.courseId)}
+                          disabled={
+                            enrollStatus[c.courseId] === "loading" ||
+                            enrollStatus[c.courseId] === "success"
+                          }
+                          className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          {enrollStatus[c.courseId] === "loading"
+                            ? "Enrolling…"
+                            : enrollStatus[c.courseId] === "success"
+                            ? "Enrolled!"
+                            : (
+                              <>
+                                <PlusCircle className="w-3.5 h-3.5" /> Enroll
+                              </>
+                            )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

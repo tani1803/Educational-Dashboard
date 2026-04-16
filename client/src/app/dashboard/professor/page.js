@@ -2,8 +2,8 @@
 
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { useEffect, useState } from "react";
-import { BookOpen, Users, FilePlus, Shield, CheckCircle2, Circle } from "lucide-react";
-import { coursesAPI, tpcAPI, userAPI } from "@/lib/api";
+import { BookOpen, Users, FilePlus, Shield, CheckCircle2, Circle, UserPlus } from "lucide-react";
+import { coursesAPI, tpcAPI, userAPI, alumniAPI, taAPI } from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,7 @@ export default function ProfessorDashboard() {
   const [loading, setLoading] = useState(true);
   const [allSeniors, setAllSeniors] = useState([]);
   const [pendingTalks, setPendingTalks] = useState([]);
+  const [taRequests, setTaRequests] = useState([]);
   const [tpcLoading, setTpcLoading] = useState(false);
   const [isHOD, setIsHOD] = useState(false);
   const [userDept, setUserDept] = useState("");
@@ -27,8 +28,20 @@ export default function ProfessorDashboard() {
   useEffect(() => {
     fetchCourses();
     fetchTpcData();
+    fetchTaRequests();
     checkProfile();
   }, []);
+
+  async function fetchTaRequests() {
+    try {
+      const res = await taAPI.getProfessorRequests();
+      // Filter out only pending ones
+      const pending = (res.data?.data || []).filter(r => r.status === "pending");
+      setTaRequests(pending);
+    } catch (e) {
+      console.error("Failed to fetch TA requests", e);
+    }
+  }
 
   async function fetchCourses() {
     setLoading(true);
@@ -63,6 +76,17 @@ export default function ProfessorDashboard() {
       setPendingTalks(pending.data?.data || []);
     } catch (e) {
       alert("Failed to review post.");
+    }
+  }
+
+  async function handleApproveTaRequest(id) {
+    try {
+      await taAPI.approveRequest(id);
+      alert("TA Request Approved Successfully!");
+      fetchTaRequests();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to approve TA request.");
     }
   }
 
@@ -309,6 +333,53 @@ export default function ProfessorDashboard() {
                     className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-100 hover:shadow-indigo-200 transition-all"
                   >
                     Agree & Publish
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Pending TA Requests ── */}
+      {taRequests.length > 0 && (
+        <div className="mb-14 bg-indigo-50/50 p-8 rounded-[40px] border border-indigo-100 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-600/5 rounded-full -mr-10 -mt-10 blur-3xl"></div>
+          <div className="flex items-center justify-between mb-8 relative z-10">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                Pending TA Applications
+              </h2>
+              <p className="text-slate-500 text-sm mt-1 font-medium ml-13">Review applications from MTech students offering to assist in your courses.</p>
+            </div>
+            <span className="bg-white px-4 py-2 rounded-xl border border-indigo-100 text-indigo-600 font-bold text-sm shadow-sm">
+              {taRequests.length} Waiting
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 relative z-10">
+            {taRequests.map((req) => (
+              <div key={req._id} className="bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-indigo-50 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
+                      MTech Applicant
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-bold">Col. ID: {req.student?.collegeId}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 mb-1">{req.student?.name}</h3>
+                  <p className="text-sm border-l-2 border-indigo-200 pl-3 text-slate-500 font-medium">Course: {req.course?.title} ({req.course?.courseId})</p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleApproveTaRequest(req._id)}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-100 hover:shadow-indigo-200 transition-all"
+                  >
+                    Approve Assignment
                   </button>
                 </div>
               </div>

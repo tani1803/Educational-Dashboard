@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { placementAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,15 @@ export default function NewPlacementExperience() {
     packageCTC: "",
     placementYear: new Date().getFullYear()
   });
+
+  const [role, setRole] = useState("student");
+  
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role");
+    if (storedRole) setRole(storedRole);
+  }, []);
+
+  const feedUrl = role === "alumni" ? "/dashboard/alumni" : "/dashboard/placements";
 
   const [rounds, setRounds] = useState([
     { roundName: "Round 1:", details: "" }
@@ -74,8 +83,8 @@ export default function NewPlacementExperience() {
 
       await placementAPI.createPost(payload);
       
-      // Redirect to dashboard
-      router.push("/dashboard/placements");
+      // Redirect to dashboard based on role
+      router.push(feedUrl);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to create post.");
@@ -87,7 +96,7 @@ export default function NewPlacementExperience() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto w-full pb-12">
-        <Link href="/dashboard/placements" className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 mb-6 font-medium text-sm transition-colors">
+        <Link href={feedUrl} className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 mb-6 font-medium text-sm transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Feed
         </Link>
 

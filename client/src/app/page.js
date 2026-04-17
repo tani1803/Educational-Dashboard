@@ -152,7 +152,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex text-slate-800 bg-white">
+    <div className="h-screen overflow-hidden flex text-slate-800 bg-white">
 
       {/* Left Marketing Side (Clustered Skyline Faces) */}
       <div className="flex-1 hidden lg:flex flex-col relative bg-gradient-to-br from-indigo-50 to-indigo-100/50 items-center justify-end px-12 pt-24 overflow-hidden">

@@ -52,7 +52,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex text-slate-800 bg-white">
+    <div className="h-screen overflow-hidden flex text-slate-800 bg-white">
       <div className="flex-1 hidden lg:flex bg-gradient-to-br from-indigo-50 to-blue-50 items-center justify-center p-12">
         <div className="max-w-xl text-center">
           <h1 className="text-4xl font-extrabold text-indigo-900 mb-6">Create Your Future.</h1>

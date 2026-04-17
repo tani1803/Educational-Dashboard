@@ -409,11 +409,17 @@ export default function AlumniDashboard() {
   const filtered = talks.filter(t => {
     if (filter !== "all" && t.type !== filter) return false;
 
-    // Everyone sees approved posts
+    const isMine = t.author?._id === user?._id || t.author === user?._id;
+
+    // Alumni cannot see other people's posts as per requirements
+    if (isAlumni && !isMine) {
+      return false;
+    }
+
+    // Everyone else sees approved posts
     if (t.status === "approved") return true;
 
-    // Only author sees their own non-approved posts in the main feed
-    const isMine = t.author?._id === user?._id || t.author === user?._id;
+    // Only author sees their own non-approved posts
     return isMine;
   });
 
@@ -481,7 +487,7 @@ export default function AlumniDashboard() {
 
         {/* ── Action Cards for Alumni ── */}
         {canPost && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {isAlumni && (
               <button onClick={() => setModal("tedtalk")}
                 className="flex items-center gap-4 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-purple-200 transition-all group text-left">
@@ -490,9 +496,9 @@ export default function AlumniDashboard() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-800 group-hover:text-purple-700 transition-colors">Post a TED Talk</h4>
-                  <p className="text-sm text-slate-500">Share your journey, tips, and experience</p>
+                  <p className="text-sm text-slate-500 line-clamp-1">Share your journey and tips</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-purple-500 ml-auto transition-colors" />
+                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-purple-500 ml-auto transition-colors flex-shrink-0" />
               </button>
             )}
 
@@ -502,10 +508,22 @@ export default function AlumniDashboard() {
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-bold text-slate-800 group-hover:text-amber-700 transition-colors">Share Tech Update</h4>
-                <p className="text-sm text-slate-500">Share your company&apos;s recent tech news</p>
+                <h4 className="font-bold text-slate-800 group-hover:text-amber-700 transition-colors">Tech Update</h4>
+                <p className="text-sm text-slate-500 line-clamp-1">Share recent tech news</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-amber-500 ml-auto transition-colors" />
+              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-amber-500 ml-auto transition-colors flex-shrink-0" />
+            </button>
+            
+            <button onClick={() => router.push("/dashboard/placements/new")}
+              className="flex items-center gap-4 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group text-left">
+              <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors flex-shrink-0">
+                <Briefcase className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">Share Experience</h4>
+                <p className="text-sm text-slate-500 line-clamp-1">Post your interview stories</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 ml-auto transition-colors flex-shrink-0" />
             </button>
           </div>
         )}

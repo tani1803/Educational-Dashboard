@@ -188,66 +188,14 @@ exports.getPublishedPosts = async (req, res, next) => {
       .populate("author", "name collegeId email")
       .sort({ createdAt: -1 });
 
-    // Apply Trie search if query exists
+    // Apply generic string matching if query exists
     if (q && q.trim() !== "") {
-      const query = q.trim();
-      
-      // Extract searchable vocabulary
-      const vocabSet = new Set();
-      posts.forEach(post => {
-        vocabSet.add(post.metadata.companyName);
-        vocabSet.add(post.metadata.jobRole);
+      const queryStr = q.trim().toLowerCase();
+      posts = posts.filter(post => {
+        const companyStr = (post.metadata.companyName || "").toLowerCase();
+        const roleStr = (post.metadata.jobRole || "").toLowerCase();
+        return companyStr.includes(queryStr) || roleStr.includes(queryStr);
       });
-      const vocabArr = Array.from(vocabSet);
-
-      if (vocabArr.length > 0) {
-        const binaryPath = path.join(__dirname, "../trie/trie_search.exe");
-        const args = [query, ...vocabArr];
-        
-        const cpp = spawn(binaryPath, args);
-
-        let output = "";
-        let errorOutput = "";
-
-        cpp.stdout.on("data", (data) => output += data.toString());
-        cpp.stderr.on("data", (data) => errorOutput += data.toString());
-
-        cpp.on("close", (code) => {
-          if (code !== 0) {
-            return res.status(500).json({ message: "Search engine crashed", errorOutput, code });
-          }
-
-          const rawOutput = output.trim();
-          const normalize = (str) => str.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-
-          const matchedNames = rawOutput ? rawOutput.split(",").map(normalize) : [];
-
-          // Filter posts by checking if company or role matches
-          posts = posts.filter(post => 
-            matchedNames.includes(normalize(post.metadata.companyName)) ||
-            matchedNames.includes(normalize(post.metadata.jobRole))
-          );
-
-          // Strip anonymous data
-          const sanitizedPosts = posts.map(post => {
-            const postObj = post.toObject();
-            if (postObj.privacy.isAnonymous) {
-              postObj.author = { name: "Anonymous" };
-            }
-            return postObj;
-          });
-
-          return success(res, "Filtered posts fetched", sanitizedPosts);
-        });
-
-        cpp.on("error", (err) => {
-          return res.status(500).json({ message: "Binary spawn failed", error: err.message });
-        });
-
-        return; // Prevent further execution waiting for child process
-      } else {
-        posts = []; // No vocab = no matches
-      }
     }
 
     // Strip anonymous data for standard query

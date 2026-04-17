@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { placementAPI, alumniAPI } from "@/lib/api";
-import { Search, Briefcase, Calendar, MapPin, Tag, Code, Trophy, Plus, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Search, Briefcase, Calendar, MapPin, Tag, Code, Trophy, Plus, ChevronRight, CheckCircle2, Activity } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -100,6 +100,10 @@ export default function PlacementsFeed() {
 
           <Link href="/dashboard/placements/contests" className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap">
             <Trophy className="w-4 h-4" /> Contests
+          </Link>
+
+          <Link href="/dashboard/placements/performance" className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap">
+            <Activity className="w-4 h-4" /> My Performance
           </Link>
 
           <Link href="/dashboard/placements/mock-oa" className="flex items-center gap-2 bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap">

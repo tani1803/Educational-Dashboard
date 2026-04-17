@@ -256,6 +256,12 @@ export const tpcAPI = {
   toggleCoord: (userId) => api.put(`/placement/tpc/toggle/${userId}`) // toggle status
 };
 
+export const contestPerformanceAPI = {
+  getPerformances: () => api.get('/contest-performance/me'),
+  addPerformance: (data) => api.post('/contest-performance', data),
+  deletePerformance: (id) => api.delete(`/contest-performance/${id}`)
+};
+
 export const taAPI = {
   getProfessorRequests: () => api.get('/ta-requests/professor/requests'),
   approveRequest: (requestId) => api.put(`/ta-requests/professor/requests/${requestId}/approve`)

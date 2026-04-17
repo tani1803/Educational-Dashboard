@@ -39,6 +39,7 @@ app.use("/api/placement/tpc", tpcRoutes);
 app.use("/api/alumni", alumniRoutes);
 app.use("/api/ta", taRoutes);
 app.use("/api/ta-requests", taRequestRoutes);
+app.use("/api/contest-performance", require("./routes/contestPerformance.routes"));
 
 // Test route
 app.get("/", (req, res) => {

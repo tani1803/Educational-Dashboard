@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { coursesAPI, assignmentsAPI } from "@/lib/api";
 import { Search, Users, Calendar, ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import GradesManager from "@/components/Dashboard/Professor/GradesManager";
 
 export default function TACourseDetail({ params }) {
   const [course, setCourse] = useState(null);
@@ -19,13 +20,21 @@ export default function TACourseDetail({ params }) {
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
+  const fetchCourse = async (cid) => {
+    try {
+      const res = await coursesAPI.getCourse(cid);
+      setCourse(res.data.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const run = async () => {
       try {
         const p = await Promise.resolve(params);
         setCourseCode(p.id);
-        const res = await coursesAPI.getCourse(p.id);
-        setCourse(res.data.data);
+        await fetchCourse(p.id);
 
         // Load submissions
         const subRes = await assignmentsAPI.getSubmissions(p.id);
@@ -118,7 +127,10 @@ export default function TACourseDetail({ params }) {
                         )}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <button className="bg-green-50 hover:bg-green-100 text-green-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+                        <button 
+                          onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                          className="bg-green-50 hover:bg-green-100 text-green-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
+                        >
                           <CheckCircle className="w-4 h-4" /> Evaluate
                         </button>
                       </div>
@@ -179,7 +191,7 @@ export default function TACourseDetail({ params }) {
               ) : (
                 searchQuery && !searching && (
                   <div className="text-center p-4 bg-orange-50 text-orange-600 border border-orange-100 rounded-xl text-sm">
-                    No students matched &apos;{searchQuery}&apos;. 
+                    No students matched {"'"}{searchQuery}{"'"}.
                     {typeof window !== 'undefined' && window.lastSearchDebug && (
                       <span className="block mt-2 font-mono text-xs text-orange-400 break-all text-left bg-orange-100 p-2 rounded">
                         Raw C++ Output: {JSON.stringify(window.lastSearchDebug.rawOutput)}<br/>
@@ -200,6 +212,15 @@ export default function TACourseDetail({ params }) {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <GradesManager 
+          course={course} 
+          isPublished={course.gradesPublished} 
+          onCourseUpdated={() => fetchCourse(courseCode)}
+          userRole="ta"
+        />
       </div>
     </DashboardLayout>
   );

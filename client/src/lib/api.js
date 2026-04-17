@@ -76,8 +76,11 @@ export const gradesAPI = {
   getCourseGrades: async (courseId) => {
     return api.get(`/courses/${courseId}/grades`);
   },
-  exportGrades: async (courseId) => {
-    return api.get(`/courses/${courseId}/grades/export`, { responseType: 'blob' });
+  exportGrades: async (courseId, template = false, format = 'csv') => {
+    const params = new URLSearchParams();
+    if (template) params.append('template', 'true');
+    if (format) params.append('format', format);
+    return api.get(`/courses/${courseId}/grades/export?${params.toString()}`, { responseType: 'blob' });
   },
   importGrades: async (courseId, formData) => {
     return api.post(`/courses/${courseId}/grades/import`, formData, {
@@ -140,6 +143,9 @@ export const userAPI = {
   },
   getTranscript: async () => {
     return api.get('/users/me/transcript');
+  },
+  updateCRStatus: async (studentId, isCR) => {
+    return api.put(`/users/${studentId}/cr`, { isCR });
   }
 };
 

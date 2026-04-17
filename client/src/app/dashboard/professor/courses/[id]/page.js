@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
-import { coursesAPI, assignmentsAPI } from "@/lib/api";
+import { coursesAPI, assignmentsAPI, userAPI } from "@/lib/api";
 import { Search, Users, Calendar, ArrowLeft, FilePlus, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import GradesManager from "@/components/Dashboard/Professor/GradesManager";
@@ -123,6 +123,16 @@ export default function ProfessorCourseDetail({ params }) {
       alert(err.response?.data?.message || err.message || "Error adding assignment.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleToggleCR = async (studentId, currentCRStatus) => {
+    try {
+      await userAPI.updateCRStatus(studentId, !currentCRStatus);
+      fetchCourse(courseCode);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "Failed to update CR status");
     }
   };
 
@@ -302,9 +312,25 @@ export default function ProfessorCourseDetail({ params }) {
             </div>
             
             {!searchQuery && course.students && course.students.map((st) => (
-              <div key={st._id} className="flex items-center justify-between p-3 border-b last:border-0 border-slate-100">
-                <p className="text-sm font-medium text-slate-700">{st.name}</p>
-                <p className="text-xs text-slate-500">{st.collegeId || st.email}</p>
+              <div key={st._id} className="flex items-center justify-between p-3 border-b last:border-0 border-slate-100 hover:bg-slate-50 transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    {st.name}
+                    {st.isCR && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">CR</span>}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">{st.collegeId || st.email}</p>
+                </div>
+                <div className="flex items-center">
+                   <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm">
+                    <input 
+                      type="checkbox" 
+                      checked={st.isCR || false}
+                      onChange={() => handleToggleCR(st._id, st.isCR)}
+                      className="w-3.5 h-3.5 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+                    />
+                    CR
+                  </label>
+                </div>
               </div>
             ))}
           </div>
@@ -316,6 +342,7 @@ export default function ProfessorCourseDetail({ params }) {
           course={course} 
           isPublished={course.gradesPublished} 
           onCourseUpdated={() => fetchCourse(courseCode)}
+          userRole="professor"
         />
       </div>
     </DashboardLayout>

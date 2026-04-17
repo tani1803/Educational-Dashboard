@@ -5,7 +5,7 @@ import { gradesAPI } from "@/lib/api";
 import { Download, Upload, Save, CheckCircle, Search, Edit3, X, FileText, AlertCircle, Settings } from "lucide-react";
 import { coursesAPI } from "@/lib/api";
 
-export default function GradesManager({ course, isPublished, onCourseUpdated }) {
+export default function GradesManager({ course, isPublished, onCourseUpdated, userRole = "professor" }) {
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -47,19 +47,35 @@ export default function GradesManager({ course, isPublished, onCourseUpdated }) 
     }
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format = 'csv') => {
     try {
-      const res = await gradesAPI.exportGrades(course.courseId);
+      const res = await gradesAPI.exportGrades(course.courseId, false, format);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${course.courseId}_Grades.csv`);
+      link.setAttribute('download', `${course.courseId}_Grades.${format}`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
     } catch (error) {
       console.error("Export failed", error);
       alert("Failed to export grades");
+    }
+  };
+
+  const handleExportTemplate = async (format = 'csv') => {
+    try {
+      const res = await gradesAPI.exportGrades(course.courseId, true, format);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${course.courseId}_Grades_Template.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("Template export failed", error);
+      alert("Failed to export template");
     }
   };
 
@@ -130,8 +146,8 @@ export default function GradesManager({ course, isPublished, onCourseUpdated }) 
         await gradesAPI.updateComponents(course.courseId, selectedGrade.student._id, payload);
       }
 
-      // 2. Update Final Grade if changed
-      if (editFinalGrade !== selectedGrade.finalGrade) {
+      // 2. Update Final Grade if changed (only for Professors)
+      if (userRole === "professor" && editFinalGrade !== selectedGrade.finalGrade) {
         await gradesAPI.updateFinalGrade(course.courseId, selectedGrade.student._id, editFinalGrade || null);
       }
 
@@ -176,20 +192,22 @@ export default function GradesManager({ course, isPublished, onCourseUpdated }) 
           <p className="text-sm text-slate-500 mt-1">Manage, calculate and publish student grades</p>
         </div>
         
-        <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
-          >
-            <Settings className="w-4 h-4 text-slate-600" />
-            Config
-          </button>
+        <div className="flex flex-wrap gap-2">
+          {userRole === "professor" && (
+            <button 
+              onClick={() => setShowSettingsModal(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-xs font-medium"
+            >
+              <Settings className="w-4 h-4 text-slate-600" />
+              Config
+            </button>
+          )}
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-xs font-medium"
           >
             <Upload className="w-4 h-4 text-emerald-600" />
-            Import File
+            Import
           </button>
           <input 
             type="file" 
@@ -199,22 +217,52 @@ export default function GradesManager({ course, isPublished, onCourseUpdated }) 
             accept=".csv,.xlsx" 
           />
 
-          <button 
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
-          >
-            <Download className="w-4 h-4 text-blue-600" />
-            Export CSV
-          </button>
+          <div className="flex border border-indigo-200 rounded-lg overflow-hidden">
+            <button 
+              onClick={() => handleExportTemplate('xlsx')}
+              className="flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-bold border-r border-indigo-100"
+              title="Download Template as Excel"
+            >
+              <Download className="w-4 h-4 text-indigo-600" />
+              Template (XLSX)
+            </button>
+            <button 
+              onClick={() => handleExportTemplate('csv')}
+              className="flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors text-xs font-medium"
+              title="Download Template as CSV"
+            >
+              CSV
+            </button>
+          </div>
 
-          <button 
-            onClick={handlePublish}
-            disabled={publishing || grades.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <CheckCircle className="w-4 h-4" />
-            {publishing ? "Publishing..." : "Publish Final Grades"}
-          </button>
+          <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+            <button 
+              onClick={() => handleExport('xlsx')}
+              className="flex items-center gap-2 px-3 py-2 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-xs font-bold border-r border-slate-200"
+              title="Export Grades as Excel"
+            >
+              <Download className="w-4 h-4 text-blue-600" />
+              Export (XLSX)
+            </button>
+            <button 
+              onClick={() => handleExport('csv')}
+              className="flex items-center gap-2 px-3 py-2 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-xs font-medium"
+              title="Export Grades as CSV"
+            >
+              CSV
+            </button>
+          </div>
+
+          {userRole === "professor" && (
+            <button 
+              onClick={handlePublish}
+              disabled={publishing || grades.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CheckCircle className="w-4 h-4" />
+              {publishing ? "Publishing..." : "Publish Final Grades"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -324,17 +372,19 @@ export default function GradesManager({ course, isPublished, onCourseUpdated }) 
                 ))}
               </div>
 
-              <div className="border-t border-slate-100 pt-6 mb-6">
-                <label className="block text-sm font-semibold text-emerald-800 uppercase mb-2">Official Final Grade (Letter)</label>
-                <input 
-                  type="text" 
-                  value={editFinalGrade}
-                  onChange={(e) => setEditFinalGrade(e.target.value.toUpperCase())}
-                  className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-emerald-700 uppercase"
-                  placeholder="e.g. A+, A, B, C..."
-                  maxLength={2}
-                />
-              </div>
+              {userRole === "professor" && (
+                <div className="border-t border-slate-100 pt-6 mb-6">
+                  <label className="block text-sm font-semibold text-emerald-800 uppercase mb-2">Official Final Grade (Letter)</label>
+                  <input 
+                    type="text" 
+                    value={editFinalGrade}
+                    onChange={(e) => setEditFinalGrade(e.target.value.toUpperCase())}
+                    className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold text-emerald-700 uppercase"
+                    placeholder="e.g. A+, A, B, C..."
+                    maxLength={2}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3">
                 <button 

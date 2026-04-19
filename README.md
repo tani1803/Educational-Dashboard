@@ -1,7 +1,31 @@
+## Login & Registration Instructions (Development)
+
+This application utilizes a custom Role-Based Access Control (RBAC) system. Since there are no pre-seeded users, you will need to register an account to access the dashboard.
+
+### 1. Registering an Account
+Navigate to the **Sign Up / Registration** page and fill out the details. 
+- **Allowed Roles:** `student`, `professor`, `ta`, `alumni`
+- **College ID:** Use any alphanumeric ID. For students, it's recommended to use an actual format (e.g., `2401AI54`) because the system dynamically extracts your "Department" (e.g., `AI` → `Artificial Intelligence`) from the ID format!
+- **Strict Email Format (Important):** For `student` and `ta` roles, the system validates that the email matches the official university regex layout. **You must use this format:** 
+  `yourname_2401ai54@iitp.ac.in` 
+  *(Professors and alumni bypass this strict check, but keeping the format is good practice).*
+
+### 2. Getting the OTP (Local Development Setup)
+To prevent spam during local development, real Outlook SMTP email sending is temporarily commented out. 
+Instead, **the 4-digit verification OTP will print directly to your backend terminal!**
+
+Once you hit "Register", check the terminal running `node server.js` for an output like this:
+```text
+=========================================
+ MOCK EMAIL SENT
+ ----------------------------------------
+ To:      yourname_2401ai54@iitp.ac.in
+ Subject: EduNexus — Your OTP for Registration
+ OTP:     8492
+=========================================
+
+
 Done with authentication (register/login via collegeId + JWT), RBAC middleware (protect + restrictTo), course creation by professor, student enrollment, and get all users for professor and TA. Models for User and Course are also finalized with all required fields.
-
-new requirement - npm install json2csv csvtojson
-
 
 2. The Grading Engine (Architecture)
 Normalized Database Schema: Built a dedicated Grade model to keep the database fast, tracking individual components (quizzes, midsem, endsem) and final scores.

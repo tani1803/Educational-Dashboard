@@ -1,13 +1,13 @@
 const nodemailer = require("nodemailer");
 
-// ── OUTLOOK SMTP TRANSPORTER ───────────────────────────────────
+// ── SMTP TRANSPORTER ───────────────────────────────────
 const transporter = nodemailer.createTransport({
-  host: "smtp.office365.com",
-  port: 587,
+  host: process.env.SMTP_HOST || "smtp.office365.com",
+  port: process.env.SMTP_PORT || 587,
   secure: false,           // STARTTLS
   auth: {
-    user: process.env.OUTLOOK_EMAIL,
-    pass: process.env.OUTLOOK_PASSWORD
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
   },
   tls: {
     ciphers: "SSLv3"
@@ -16,24 +16,11 @@ const transporter = nodemailer.createTransport({
 
 // ── SEND OTP EMAIL ─────────────────────────────────────────────
 exports.sendOTPEmail = async (toEmail, otp) => {
-  // -------------------------------------------------------------
-  // MOCK EMAIL FOR LOCAL DEVELOPMENT
-  // -------------------------------------------------------------
-  console.log(`\n=========================================`);
-  console.log(` 📧 MOCK EMAIL SENT`);
-  console.log(` ----------------------------------------`);
-  console.log(` To:      ${toEmail}`);
-  console.log(` Subject: EduNexus — Your OTP for Registration`);
-  console.log(` OTP:     ${otp}`);
-  console.log(`=========================================\n`);
-
-  /* 
-  // REAL EMAIL LOGIC (Commented out for development)
   const mailOptions = {
-    from: \`"EduNexus" <\${process.env.OUTLOOK_EMAIL}>\`,
+    from: `"EduNexus" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: "EduNexus — Your OTP for Registration",
-    html: \`
+    html: `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
         <h2 style="color: #4F46E5;">EduNexus</h2>
         <p>Hi there,</p>
@@ -49,15 +36,20 @@ exports.sendOTPEmail = async (toEmail, otp) => {
           border-radius: 8px;
           margin: 24px 0;
         ">
-          \${otp}
+          ${otp}
         </div>
         <p style="color: #6B7280; font-size: 13px;">
           If you did not register on EduNexus, please ignore this email.
         </p>
       </div>
-    \`
+    `
   };
 
-  await transporter.sendMail(mailOptions);
-  */
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`[Email Service] OTP successfully dispatched to ${toEmail}`);
+  } catch (error) {
+    console.error("[Email Service] Failed to send email:", error.message);
+    throw new Error("Could not send the OTP email. Please check your mail service configuration.");
+  }
 };

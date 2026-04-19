@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Bell, Search, User } from "lucide-react";
+import { LogOut, Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -44,10 +44,7 @@ export default function Navbar({ role }) {
         </form>
       </div>
       <div className="flex items-center gap-6">
-        <button className="relative text-slate-500 hover:text-slate-800 transition-colors">
-          <Bell className="w-6 h-6" />
-          <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
+
         <div className="flex items-center gap-3 pl-6 border-l">
           <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700">
             <User className="w-5 h-5" />

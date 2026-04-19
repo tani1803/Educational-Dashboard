@@ -37,33 +37,9 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Responsive Grid Layout */}
-        <div className="flex flex-col xl:flex-row gap-8">
-          
-          {/* Main Area (Assignments) - 75% width on desktop */}
-          <div className="w-full xl:w-[75%] space-y-8">
-            <AssignmentHub />
-          </div>
-
-          {/* Side Area (Quick Access) - 25% width on desktop */}
-          <div className="w-full xl:w-[25%] space-y-6">
-            <div className="bg-white/50 rounded-xl p-6 shadow-sm border border-[#e6e2d8]">
-              <h2 className="text-xl font-serif font-bold text-[#2d2a26] mb-4 uppercase tracking-widest border-b border-[#e6e2d8] pb-2">
-                Quick Access
-              </h2>
-              <div className="flex flex-col gap-3">
-                <button className="w-full bg-[#fcfbf9] text-left px-5 py-3 rounded-lg border border-[#e6e2d8] hover:border-[#a99c85] hover:bg-white transition-colors text-[#4a4744] font-medium shadow-sm">
-                  New Assignments
-                </button>
-                <button className="w-full bg-[#fcfbf9] text-left px-5 py-3 rounded-lg border border-[#e6e2d8] hover:border-[#a99c85] hover:bg-white transition-colors text-[#4a4744] font-medium shadow-sm">
-                  New Exam
-                </button>
-                <button className="w-full bg-[#fcfbf9] text-left px-5 py-3 rounded-lg border border-[#e6e2d8] hover:border-[#a99c85] hover:bg-white transition-colors text-[#4a4744] font-medium shadow-sm">
-                  New Notes
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Main Content */}
+        <div className="w-full space-y-8">
+          <AssignmentHub />
         </div>
       </div>
     </DashboardLayout>

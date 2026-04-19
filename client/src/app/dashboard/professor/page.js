@@ -23,6 +23,7 @@ export default function ProfessorDashboard() {
   const [courseId, setCourseId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [credits, setCredits] = useState(3);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -115,11 +116,12 @@ export default function ProfessorDashboard() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await coursesAPI.createCourse({ courseId, title, description });
+      await coursesAPI.createCourse({ courseId, title, description, credits: Number(credits) });
       setShowCreateForm(false);
       setCourseId("");
       setTitle("");
       setDescription("");
+      setCredits(3);
       fetchCourses();
     } catch (error) {
       console.error(error);
@@ -151,7 +153,7 @@ export default function ProfessorDashboard() {
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600"></div>
           <h2 className="text-xl font-bold text-slate-800 mb-6">Create New Course</h2>
           <form onSubmit={handleCreateCourse} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Course Code (e.g. CS101)</label>
                 <input
@@ -169,6 +171,19 @@ export default function ProfessorDashboard() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Credits</label>
+                <input
+                  type="number"
+                  value={credits}
+                  onChange={(e) => setCredits(e.target.value)}
+                  className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                  min="0"
+                  max="20"
+                  step="0.5"
                   required
                 />
               </div>

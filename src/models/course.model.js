@@ -44,6 +44,11 @@ const courseSchema = new mongoose.Schema(
         "Unknown"
       ]
     },
+    credits: {
+      type: Number,
+      default: 3,
+      required: true
+    },
     gradesPublished: {
       type: Boolean,
       default: false

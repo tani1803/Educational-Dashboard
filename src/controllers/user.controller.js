@@ -131,15 +131,54 @@ exports.updatePassword = async (req, res, next) => {
 // ── GET ACADEMIC TRANSCRIPT ────────────────────────────────────
 exports.getTranscript = async (req, res, next) => {
   try {
-    const transcript = await Grade.find({ 
-      student: req.user.id,
-      finalGrade: { $ne: null } 
+    const allGrades = await Grade.find({ 
+      student: req.user.id
     }).populate({
       path: "course",
       select: "title courseId credits"
     });
 
-    return success(res, "Transcript fetched successfully", transcript);
+    const releasedGrades = allGrades.filter(g => g.finalGrade !== null);
+
+    if (allGrades.length > 0 && releasedGrades.length < 2) {
+      return res.status(403).json({ message: "Grades will be visible once at least 2 courses have released final grades." });
+    }
+
+    // Auto-calculate CGPA based on currently released grades
+    if (releasedGrades.length >= 2) {
+       let totalCredits = 0;
+       let totalGradePoints = 0;
+
+       const getGradePoint = (grade) => {
+          switch (grade?.trim().toUpperCase()) {
+            case "AA": return 10;
+            case "AB": return 9;
+            case "BB": return 8;
+            case "BC": return 7;
+            case "CC": return 6;
+            case "CD": return 5;
+            case "DD": return 4;
+            case "F": return 0;
+            default: return 0;
+          }
+       };
+
+       for (let gradeDoc of releasedGrades) {
+          const credits = gradeDoc.course?.credits || 3;
+          totalCredits += credits;
+          totalGradePoints += credits * getGradePoint(gradeDoc.finalGrade);
+       }
+       
+       const cgpa = totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : 0;
+
+       // Update the user's profile
+       await User.findByIdAndUpdate(req.user.id, {
+          cgpa: parseFloat(cgpa),
+          totalCreditsEarned: totalCredits
+       });
+    }
+
+    return success(res, "Transcript fetched successfully", releasedGrades);
   } catch (error) {
     next(error);
   }

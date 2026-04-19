@@ -7,6 +7,11 @@ import { BookOpen, GraduationCap, Award } from "lucide-react";
 export default function AcademicTranscript({ user }) {
   const [transcript, setTranscript] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  
+  // Real-time calculation states to ensure it always matches table
+  const [liveCgpa, setLiveCgpa] = useState(user.cgpa || 0);
+  const [liveCredits, setLiveCredits] = useState(user.totalCreditsEarned || 0);
 
   useEffect(() => {
     fetchTranscript();
@@ -15,9 +20,38 @@ export default function AcademicTranscript({ user }) {
   const fetchTranscript = async () => {
     try {
       const res = await userAPI.getTranscript();
-      setTranscript(res.data.data);
+      const records = res.data.data;
+      setTranscript(records);
+      
+      // Compute dynamically to never fall out of sync
+      let totCred = 0;
+      let totPts = 0;
+      records.forEach(r => {
+         const cr = r.course?.credits || 3;
+         let pt = 0;
+         switch(r.finalGrade?.trim().toUpperCase()) {
+            case "AA": pt = 10; break;
+            case "AB": pt = 9; break;
+            case "BB": pt = 8; break;
+            case "BC": pt = 7; break;
+            case "CC": pt = 6; break;
+            case "CD": pt = 5; break;
+            case "DD": pt = 4; break;
+            case "F": pt = 0; break;
+         }
+         totCred += cr;
+         totPts += pt * cr;
+      });
+      
+      if(totCred > 0) {
+         setLiveCgpa(totPts / totCred);
+         setLiveCredits(totCred);
+      }
     } catch (err) {
       console.error(err);
+      if (err.response?.status === 403) {
+        setErrorMessage(err.response.data.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -33,7 +67,7 @@ export default function AcademicTranscript({ user }) {
           </div>
           <div>
             <p className="text-sm font-bold text-[#736d65] uppercase tracking-widest">Cumulative GPA</p>
-            <h3 className="text-3xl font-serif font-bold text-[#2d2a26] mt-1">{user.cgpa ? user.cgpa.toFixed(2) : "0.00"}</h3>
+            <h3 className="text-3xl font-serif font-bold text-[#2d2a26] mt-1">{liveCgpa ? liveCgpa.toFixed(2) : "0.00"}</h3>
           </div>
         </div>
 
@@ -43,7 +77,7 @@ export default function AcademicTranscript({ user }) {
           </div>
           <div>
             <p className="text-sm font-bold text-[#736d65] uppercase tracking-widest">Total Credits</p>
-            <h3 className="text-3xl font-serif font-bold text-[#2d2a26] mt-1">{user.totalCreditsEarned || 0}</h3>
+            <h3 className="text-3xl font-serif font-bold text-[#2d2a26] mt-1">{liveCredits || 0}</h3>
           </div>
         </div>
       </div>
@@ -56,6 +90,10 @@ export default function AcademicTranscript({ user }) {
 
         {loading ? (
           <div className="flex justify-center py-12"><div className="w-8 h-8 rounded-full border-2 border-t-[#2d2a26] animate-spin"></div></div>
+        ) : errorMessage ? (
+          <div className="text-center py-12 text-[#736d65] font-serif italic text-lg text-red-500">
+            {errorMessage}
+          </div>
         ) : transcript.length === 0 ? (
           <div className="text-center py-12 text-[#736d65] font-serif italic">
             No graded courses found in your transcript yet.

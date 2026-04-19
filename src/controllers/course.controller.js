@@ -49,7 +49,7 @@ exports.getCourses = async (req, res, next) => {
 // 2. Create Course (Prof Only)
 exports.createCourse = async (req, res, next) => {
   try {
-    const { courseId, title, description } = req.body;
+    const { courseId, title, description, credits } = req.body;
 
     if (!courseId || !title || !description) {
       return res.status(400).json({ message: "courseId, title and description are required" });
@@ -71,6 +71,7 @@ exports.createCourse = async (req, res, next) => {
       courseId,
       title,
       description,
+      credits: credits ? Number(credits) : 3,
       instructor: req.user.id,
       department: professor.department
     });

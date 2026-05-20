@@ -16,7 +16,7 @@ const generateOTP = () => {
 exports.register = async (req, res) => {
   try {
     console.log("Registration Request Body:", req.body);
-    let { name, collegeId, email, password, role, department: bodyDepartment, isHOD } = req.body;
+    let { name, collegeId, email, password, role, department: bodyDepartment } = req.body;
 
     // Standardize input
     if (email) email = email.toLowerCase().trim();
@@ -47,7 +47,6 @@ exports.register = async (req, res) => {
           "CSE": "CSE",
           "AI": "AI",
           "CE": "Civil",
-          "CIVIL": "Civil",
           "HS": "Humanities"
         };
         if (map[code]) department = map[code];
@@ -58,7 +57,7 @@ exports.register = async (req, res) => {
     const matchesRegex = emailRegex.test(email);
     console.log(`Email check: role=${role}, email=${email}, matchesRegex=${matchesRegex}`);
     
-    if (role !== "professor" && role !== "alumni" && !matchesRegex) {
+    if (role !== "professor" && role !== "alumni" && role !== "ta" && !matchesRegex) {
       console.log("Registration failed: Invalid email format check triggered");
       return res.status(400).json({
         message: "Invalid email. Must be in format: name_2401ai54@iitp.ac.in"
@@ -76,33 +75,8 @@ exports.register = async (req, res) => {
     // 4. Check duplicate
     const userExists = await User.findOne({ $or: [{ email }, { collegeId }] });
     if (userExists) {
-      if (userExists.isVerified) {
-        console.log("Registration failed: User already exists and is verified", { email, collegeId });
-        return res.status(400).json({ message: "User already exists. Please login." });
-      } else {
-        // Automatically resend OTP for unverified user and update their details
-        console.log("Existing unverified user found. Updating details and generating new OTP.");
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        
-        userExists.name = name;
-        userExists.role = role;
-        userExists.collegeId = collegeId;
-        userExists.email = email;
-        userExists.password = await bcrypt.hash(password, 10);
-        userExists.department = department;
-        userExists.otp = await bcrypt.hash(otp, 10);
-        userExists.otpExpiry = otpExpiry;
-        userExists.isHOD = role === "professor" ? (isHOD || false) : false;
-        
-        await userExists.save();
-        
-        await sendOTPEmail(userExists.email, otp);
-        return res.status(200).json({
-          success: true,
-          message: `Your account was already registered but not verified. A new OTP has been sent to ${userExists.email}.`
-        });
-      }
+      console.log("Registration failed: User already exists", { email, collegeId });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     // 5. Hash password
@@ -110,11 +84,6 @@ exports.register = async (req, res) => {
 
     // 6. Generate OTP
     const otp = generateOTP();
-    console.log(`\n--- NEW REGISTRATION ATTEMPT ---`);
-    console.log(`Role: ${role} | Name: ${name} | Email: ${email}`);
-    console.log(`Generated OTP: ${otp}`);
-    console.log(`-------------------------------\n`);
-    
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
     const hashedOTP = await bcrypt.hash(otp, 10);
 
@@ -127,8 +96,7 @@ exports.register = async (req, res) => {
       role,
       department,
       otp: hashedOTP,
-      otpExpiry,
-      isHOD: role === "professor" ? (isHOD || false) : false
+      otpExpiry
     });
 
     // 8. Send OTP
@@ -207,20 +175,7 @@ exports.login = async (req, res) => {
     }
 
     if (!user.isVerified) {
-      // Automatically resend OTP for unverified login attempt
-      console.log(`Unverified login attempt for ${collegeId}. Resending OTP.`);
-      const otp = generateOTP();
-      const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-      user.otp = await bcrypt.hash(otp, 10);
-      user.otpExpiry = otpExpiry;
-      await user.save();
-      
-      await sendOTPEmail(user.email, otp);
-      return res.status(403).json({ 
-        message: "Account not verified. A new OTP has been sent to your email.",
-        unverified: true,
-        email: user.email 
-      });
+      return res.status(400).json({ message: "Account not verified. Please verify your OTP to login." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -228,7 +183,6 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ── JWT includes collegeId for placement middleware ─────────
     const token = jwt.sign(
       { id: user._id, role: user.role, collegeId: user.collegeId, department: user.department },
       process.env.JWT_SECRET,
@@ -244,34 +198,14 @@ exports.login = async (req, res) => {
 
     user.password = undefined;
 
-    // ── Use calculated role for students who become seniors/alumni ────────
-    // But keep "professor" and "ta" roles as they are.
-    const effectiveRole = (user.role === "professor" || user.role === "ta") 
-      ? user.role 
-      : (placementRole === "alumni" ? "alumni" : user.role);
-
     res.json({
       success: true,
       message: "Login successful",
       token,
-      user: { ...user.toObject(), role: effectiveRole },
+      user,
       placementRole   // "student" | "senior" | "alumni"
     });
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.promoteToHOD = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user || user.role !== "professor") {
-      return res.status(403).json({ message: "Only professors can become HODs." });
-    }
-    user.isHOD = true;
-    await user.save();
-    res.json({ success: true, message: "You are now the HOD." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

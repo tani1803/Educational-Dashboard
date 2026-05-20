@@ -115,13 +115,12 @@ export default function LoginPage() {
   
   const router = useRouter();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const performLogin = async (id, pass) => {
     setLoading(true);
     setError("");
 
     try {
-      const res = await authAPI.login(collegeId, password);
+      const res = await authAPI.login(id, pass);
       
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -137,6 +136,11 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    performLogin(collegeId, password);
   };
 
   const handleUsernameBlur = () => {
@@ -223,13 +227,23 @@ export default function LoginPage() {
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Entering Dashboard...' : 'Sign In'}
-          </button>
+          <div className="space-y-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Entering Dashboard...' : 'Sign In'}
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => performLogin("2401AI56", "Abhinav")}
+              className="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-medium py-3 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              Easy Access (Guest Login)
+            </button>
+          </div>
         </form>
 
         <p className="mt-8 text-center text-sm text-slate-500">

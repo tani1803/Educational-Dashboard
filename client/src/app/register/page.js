@@ -6,10 +6,10 @@ import Link from "next/link";
 import { authAPI } from "@/lib/api";
 
 const ROLES = [
-  { label: "Student",   value: "student",   hint: "1st - 4th year" },
-  { label: "TA",        value: "ta",         hint: "Teaching Assistant" },
-  { label: "Professor", value: "professor",  hint: "Faculty" },
-  { label: "Alumni",    value: "alumni",     hint: "Graduated" },
+  { label: "Student", value: "student", hint: "1st - 4th year" },
+  { label: "TA", value: "ta", hint: "Teaching Assistant" },
+  { label: "Professor", value: "professor", hint: "Faculty" },
+  { label: "Alumni", value: "alumni", hint: "Graduated" },
 ];
 
 export default function RegisterPage() {
@@ -83,11 +83,10 @@ export default function RegisterPage() {
                   key={r.value}
                   type="button"
                   onClick={() => setFormData({ ...formData, role: r.value })}
-                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all text-left border ${
-                    formData.role === r.value
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
-                  }`}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all text-left border ${formData.role === r.value
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                    }`}
                 >
                   <p className="font-semibold">{r.label}</p>
                   <p className={`text-xs mt-0.5 ${formData.role === r.value ? "text-indigo-200" : "text-slate-400"}`}>
@@ -116,13 +115,13 @@ export default function RegisterPage() {
               >
                 <option value="" disabled>Select Department</option>
                 <option value="CSE">CSE</option>
-                <option value="Mech">Mechanical Engineering</option>
+                <option value="Mechanical">Mechanical Engineering</option>
                 <option value="Electrical">Electrical</option>
                 <option value="Data Science">Data Science</option>
                 <option value="Mathematics and Computing">Mathematics and Computing</option>
-                <option value="AI">AI</option>
                 <option value="Civil">Civil</option>
                 <option value="Humanities">Humanities</option>
+                <option value="Metallurgy">Metallurgy</option>
                 <option value="Unknown">Other / Unknown</option>
               </select>
             </div>
@@ -130,8 +129,8 @@ export default function RegisterPage() {
 
           {formData.role === "professor" && (
             <div className="flex items-center gap-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="isHOD"
                 checked={formData.isHOD}
                 onChange={(e) => setFormData({ ...formData, isHOD: e.target.checked })}
@@ -175,7 +174,7 @@ export default function RegisterPage() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
-              placeholder="name_2401ai54@iitp.ac.in"
+              placeholder={formData.role === "student" ? "name_2401ai54@iitp.ac.in" : "your.email@example.com"}
               required
             />
           </div>
